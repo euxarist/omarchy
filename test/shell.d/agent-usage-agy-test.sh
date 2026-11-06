@@ -12,6 +12,7 @@ agent_sandbox
 
 python3 - <<'PY'
 from agent_usage_fixtures import *
+import re
 
 TIER = "v1internal:loadCodeAssist"
 SUMMARY = "v1internal:retrieveUserQuotaSummary"
@@ -110,4 +111,28 @@ record, _ = agy({
 expect("404 on retrieveUserQuota degrades cleanly to summary limits",
        [record["tierLabel"], record["limits"], record["usageStatusText"]],
        ["Ultra", [], ""], record)
+# On Pro, Gemini, Gemini 4 Argon, and Claude/GPT each carry their own weekly
+# allowance; each is titled by its family so it gets its own meter row and reset
+# clock, Argon ahead of Claude/GPT. Gemini's weekly bucket is the plan's own, so
+# retrieveUserQuota is never called.
+machine()
+record, http = agy({
+  TIER: {"paidTier": {"id": "g1-pro-tier", "name": "Google AI Pro"}},
+  SUMMARY: {"groups": [
+    {"displayName": "Claude and GPT models", "buckets": [{"bucketId": "3p-weekly", "window": "weekly", "remainingFraction": 0.75}]},
+    {"displayName": "Gemini 4 Argon", "buckets": [{"bucketId": "gemini-argon-wtu-weekly", "window": "weekly", "remainingFraction": 0.1}]},
+    {"displayName": "Gemini Models", "buckets": [{"bucketId": "gemini-weekly", "window": "weekly", "remainingFraction": 0.5}]},
+  ]},
+})
+expect("peer weekly allowances each get a family-titled row",
+       [(w["title"], round(w["percent"], 2)) for w in record["limits"]],
+       [("Gemini Weekly", 0.5), ("Argon Weekly", 0.9), ("Claude/GPT Weekly", 0.25)], record)
+expect("a Gemini Weekly row keeps retrieveUserQuota uncalled",
+       [r["url"] for r in http.requests if r["url"].endswith(QUOTA)], [], http.requests)
+expect("requests carry Antigravity's CLI User-Agent",
+       all(re.fullmatch(r"antigravity/cli/\S+ \(aidev_client\)", r["headers"].get("user-agent") or "") for r in http.requests), True,
+       [r["headers"] for r in http.requests])
+expect("loadCodeAssist names the ANTIGRAVITY ideType",
+       [json.loads(r["data"] or b"{}") for r in http.requests if r["url"].endswith(TIER)],
+       [{"metadata": {"ideType": "ANTIGRAVITY"}}], http.requests)
 PY
