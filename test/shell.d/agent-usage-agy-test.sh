@@ -135,4 +135,17 @@ expect("requests carry Antigravity's CLI User-Agent",
 expect("loadCodeAssist names the ANTIGRAVITY ideType",
        [json.loads(r["data"] or b"{}") for r in http.requests if r["url"].endswith(TIER)],
        [{"metadata": {"ideType": "ANTIGRAVITY"}}], http.requests)
+# The User-Agent version comes from the installed agy (or AGY_CLI_VERSION).
+machine()
+old_env = os.environ.get("AGY_CLI_VERSION")
+try:
+  os.environ["AGY_CLI_VERSION"] = "2.26.0"
+  _, http = agy({TIER: {"paidTier": {"id": "g1-pro-tier", "name": "Google AI Pro"}}, SUMMARY: {"groups": []}})
+  expect("User-Agent version derives from the installed agy",
+         {r["headers"].get("user-agent") for r in http.requests}, {"antigravity/cli/2.26.0 (aidev_client)"}, http.requests)
+finally:
+  if old_env is None:
+    os.environ.pop("AGY_CLI_VERSION", None)
+  else:
+    os.environ["AGY_CLI_VERSION"] = old_env
 PY
