@@ -196,6 +196,7 @@
   "setup.default.agent": {"icon":"󰚩","label":"Agent","title":"Default Agent"},
   "setup.default.agent.amp": {"icon":"","iconFont":"omarchy","label":"Amp","checked":"[[ \"$(omarchy-default-agent)\" == \"amp\" ]]","action":"omarchy-default-agent amp"},
   "setup.default.agent.agy": {"icon":"","iconFont":"omarchy","label":"Antigravity","checked":"[[ \"$(omarchy-default-agent)\" == \"agy\" ]]","action":"omarchy-default-agent agy"},
+  "setup.default.agent.cairn": {"icon":"󰚩","label":"Cairn","checked":"[[ \"$(omarchy-default-agent)\" == \"cairn\" ]]","action":"omarchy-default-agent cairn"},
   "setup.default.agent.claude": {"icon":"","iconFont":"omarchy","label":"Claude","checked":"[[ \"$(omarchy-default-agent)\" == \"claude\" ]]","action":"omarchy-default-agent claude"},
   "setup.default.agent.codex": {"icon":"","iconFont":"omarchy","label":"Codex","checked":"[[ \"$(omarchy-default-agent)\" == \"codex\" ]]","action":"omarchy-default-agent codex"},
   "setup.default.agent.commandcode": {"icon":"","iconFont":"omarchy","label":"Command Code","checked":"[[ \"$(omarchy-default-agent)\" == \"commandcode\" ]]","action":"omarchy-default-agent commandcode"},

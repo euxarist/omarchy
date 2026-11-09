@@ -670,7 +670,23 @@ mapfile -d '' -t agent_open_args <"$agent_open_log"
   fail "newly installed Muse opens in the installation terminal"
 pass "Muse installs visibly through mise and opens directly"
 
+# Cairn updates itself, so a copy on PATH is all selecting it needs.
 saved_agent=$(<"$agent_file")
+printf '#!/bin/bash\n' >"$mock_bin/cairn"
+chmod +x "$mock_bin/cairn"
+: >"$terminal_log"
+: >"$mise_history"
+: >"$agent_open_log"
+omarchy-default-agent cairn
+[[ ! -s $terminal_log ]] || fail "Cairn on PATH needs no install terminal"
+[[ ! -s $mise_history ]] || fail "Cairn selection leaves mise alone"
+[[ $(<"$agent_file") == "cairn" ]] || fail "Cairn on PATH becomes the default"
+mapfile -d '' -t agent_open_args <"$agent_open_log"
+[[ ${agent_open_args[*]} == "omarchy-agent" ]] || fail "Cairn opens after selection"
+rm "$mock_bin/cairn"
+printf '%s\n' "$saved_agent" >"$agent_file"
+pass "Cairn on PATH is selected without mise"
+
 for agent in qwen dsh mcode kiro-cli freebuff kilo devin amp commandcode; do
   tool_var="${agent//-/_}_tool"
   package_var="${agent//-/_}_package"
@@ -806,6 +822,7 @@ assert_launch kilo kilo --auto "--prompt=Review this project"
 assert_launch devin devin --permission-mode dangerous --respect-workspace-trust false -- "Review this project"
 assert_launch amp bash -c 'printf "%s\n" "$1" | exec "$0" --dangerously-allow-all' amp "Review this project"
 assert_launch commandcode commandcode --yolo -- "Review this project"
+assert_launch cairn cairn --dangerously-skip-permissions "Review this project"
 [[ $(<"$clipboard_log") == "Review this project" ]] || fail "Freebuff launcher puts the prompt on the clipboard"
 mapfile -d '' -t notification_args <"$notification_history"
 [[ ${notification_args[*]} == *"Freebuff takes no starting prompt"* ]] || fail "Freebuff launcher says where the prompt went"
@@ -849,6 +866,7 @@ assert_bypass kilo kilo --auto
 assert_bypass devin devin --permission-mode dangerous --respect-workspace-trust false
 assert_bypass amp amp --dangerously-allow-all
 assert_bypass commandcode commandcode --yolo
+assert_bypass cairn cairn --dangerously-skip-permissions
 [[ ! -s $clipboard_log && ! -s $notification_history ]] || fail "Freebuff launcher leaves the clipboard alone without a prompt"
 pass "agent launcher skips permission prompts for every supported agent"
 

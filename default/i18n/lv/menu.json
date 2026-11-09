@@ -1250,6 +1250,9 @@
   "setup.default.agent.commandcode": {
     "label": "Command Code"
   },
+  "setup.default.agent.cairn": {
+    "label": "Cairn"
+  },
   "setup.default.agent.devin": {
     "label": "Devin CLI"
   },

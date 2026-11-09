@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # omarchy:summary=Set and launch the default coding agent
-# omarchy:args=[pi|omp|opencode|ori|claude|codex|grok|openclaw|agy|hermes|copilot|crush|cursor-agent|muse|kimi|qwen|dsh|mcode|kiro-cli|freebuff|kilo|devin|amp|commandcode]
+# omarchy:args=[pi|omp|opencode|ori|claude|codex|grok|openclaw|agy|hermes|copilot|crush|cursor-agent|muse|kimi|qwen|dsh|mcode|kiro-cli|freebuff|kilo|devin|amp|commandcode|cairn]
 # omarchy:examples=omarchy default agent | omarchy default agent codex | omarchy default agent claude
 
 installing=false
@@ -64,8 +64,9 @@ devin | devin-cli)
   ;;
 amp | ampcode) agent="amp"; name="Amp" ;;
 commandcode | command-code | cmdc) agent="commandcode"; name="Command Code"; agent_package="npm:command-code" ;;
+cairn) agent="cairn"; name="Cairn"; agent_self_managed=true ;;
 *)
-  echo "Usage: omarchy-default-agent <pi|omp|opencode|ori|claude|codex|grok|openclaw|agy|hermes|copilot|crush|cursor-agent|muse|kimi|qwen|dsh|mcode|kiro-cli|freebuff|kilo|devin|amp|commandcode>"
+  echo "Usage: omarchy-default-agent <pi|omp|opencode|ori|claude|codex|grok|openclaw|agy|hermes|copilot|crush|cursor-agent|muse|kimi|qwen|dsh|mcode|kiro-cli|freebuff|kilo|devin|amp|commandcode|cairn>"
   exit 1
   ;;
 esac
@@ -88,6 +89,11 @@ if [[ -n ${agent_installer:-} ]]; then
   # minutes-long install inside the menu action instead.
   agent_present() { "$agent_installer" --check; }
   agent_install() { "$agent_installer" --now; }
+elif [[ ${agent_self_managed:-} == "true" ]]; then
+  # Cairn installs and updates itself (cargo, `cairn update`), so Omarchy only
+  # launches whatever is on PATH and never installs it.
+  agent_present() { omarchy-cmd-present "$agent"; }
+  agent_install() { agent_present; }
 else
   # omarchy-mise-install's wrappers run `mise use` and `mise x`, current ones on
   # lines of their own and older ones after an inline variable; either way
@@ -137,7 +143,9 @@ if [[ $installing == "false" ]] && ! agent_present; then
 fi
 
 if ! agent_install; then
-  if [[ $installing == "true" && -n ${agent_installer:-} ]]; then
+  if [[ ${agent_self_managed:-} == "true" ]]; then
+    echo "$name is not on PATH. Install it first; Omarchy does not install it" >&2
+  elif [[ $installing == "true" && -n ${agent_installer:-} ]]; then
     echo "Could not install $name" >&2
   elif [[ $installing == "true" ]]; then
     echo "Could not install $name with mise" >&2
