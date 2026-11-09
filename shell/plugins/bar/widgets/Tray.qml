@@ -39,6 +39,7 @@ BarWidget {
   readonly property var sectionShown: trayContent.item ? trayContent.item.sectionShown : null
   readonly property int sectionCount: bar && bar.layoutConfig && Array.isArray(bar.layoutConfig.tray) ? bar.layoutConfig.tray.length : 0
   readonly property real sectionExtent: sectionHost ? (vertical ? sectionHost.implicitHeight : sectionHost.implicitWidth) : 0
+  readonly property bool drawerEnabled: TrayModel.drawerEnabled(settings)
   readonly property bool hasDrawer: allItems.length > 0 || sectionCount > 0 || barDragging
   readonly property int drawerExtent: drawerCount * trayItemExtent + Math.max(0, drawerCount - 1) * trayItemGap + sectionExtent
   // A widget being dragged along the bar opens the drawer, to show where it
@@ -49,7 +50,7 @@ BarWidget {
   readonly property Item openPanelIndicatorItem: trayMenuOpen ? activeTrayAnchor : null
   // Match Waybar's group/tray-expander drawer transition-duration.
   readonly property int animationDuration: 600
-  property real revealProgress: expanded || holdOpen ? 1 : 0
+  property real revealProgress: TrayModel.drawerOpen(settings, expanded, holdOpen) ? 1 : 0
   readonly property real revealExtent: drawerExtent * revealProgress
   // The pinned icons sit against the tray's fixed edge with the chevron past
   // them. Opening, the drawer grows the tray between the two and pushes the
@@ -269,7 +270,7 @@ BarWidget {
     Item {
       id: horizontalTrayRoot
 
-      readonly property int chevronWidth: root.hasDrawer ? expandIcon.implicitWidth : 0
+      readonly property int chevronWidth: root.hasDrawer && root.drawerEnabled ? expandIcon.implicitWidth : 0
       readonly property var sectionShown: root.shownSection(drawerArea.x + trayClip.x, trayClip.width, drawerArea.x + trayClip.x + drawerContent.x + section.x, section.width)
 
       implicitWidth: pinnedRow.implicitWidth + chevronWidth + root.revealExtent
@@ -289,6 +290,7 @@ BarWidget {
         BarIconButton {
           id: expandIcon
           bar: root.bar
+          visible: root.drawerEnabled
           width: implicitWidth
           height: implicitHeight
           x: root.fixedAtStart ? root.revealExtent : 0
@@ -302,7 +304,7 @@ BarWidget {
         // beside the pinned icons, the section nearest them.
         Item {
           id: trayClip
-          x: root.fixedAtStart ? 0 : expandIcon.width
+          x: root.fixedAtStart ? 0 : horizontalTrayRoot.chevronWidth
           anchors.verticalCenter: parent.verticalCenter
           width: root.revealExtent
           height: root.barSize
@@ -359,7 +361,7 @@ BarWidget {
     Item {
       id: verticalTrayRoot
 
-      readonly property int chevronHeight: root.hasDrawer ? expandIcon.implicitHeight : 0
+      readonly property int chevronHeight: root.hasDrawer && root.drawerEnabled ? expandIcon.implicitHeight : 0
       readonly property var sectionShown: root.shownSection(drawerArea.y + trayClip.y, trayClip.height, drawerArea.y + trayClip.y + drawerContent.y + section.y, section.height)
 
       implicitWidth: root.barSize
@@ -379,6 +381,7 @@ BarWidget {
         BarIconButton {
           id: expandIcon
           bar: root.bar
+          visible: root.drawerEnabled
           width: implicitWidth
           height: implicitHeight
           y: root.fixedAtStart ? root.revealExtent : 0
@@ -393,7 +396,7 @@ BarWidget {
         // beside the pinned icons, the section nearest them.
         Item {
           id: trayClip
-          y: root.fixedAtStart ? 0 : expandIcon.height
+          y: root.fixedAtStart ? 0 : verticalTrayRoot.chevronHeight
           anchors.horizontalCenter: parent.horizontalCenter
           width: root.barSize
           height: root.revealExtent

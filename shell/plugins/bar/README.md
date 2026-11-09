@@ -74,6 +74,8 @@ Example `shell.json` (bar subtree only shown):
 | `omarchy.bluetooth` | Bluetooth icon + popup with device list, connect/disconnect, battery | left = popup · right = toggle radio |
 | `omarchy.monitor` | Brightness and laptop display controls | left = popup |
 
+The `omarchy.tray` widget keeps unpinned icons in a drawer that opens on hover. Set `drawer` to `false` to show every icon all the time and remove the chevron, for example `{ "id": "omarchy.tray", "drawer": false }`. The chevron holds the manage menu, so with the drawer off, hide icons by listing their ids in `hidden`.
+
 The `omarchy.indicators` widget loads individual bar indicators from `indicators/`. Omit `items` (or set it to an empty array) to show all indicators in the default order, or set `items` to a subset such as `["Dnd", "Reminder", "NightLight"]`. Set `alwaysShow` to `true` to keep inactive indicators visible instead of revealing them only on hover. Multiple `omarchy.indicators` instances are allowed, so different sections can show different subsets.
 
 ## Orientation

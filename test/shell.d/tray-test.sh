@@ -35,4 +35,14 @@ assertDeepEqual(tray.shownSpan(10, 100, 0, 30), { start: 10, length: 20 }, 'a se
 assertEqual(tray.shownSpan(0, 10, 50, 30), null, 'a section still outside the drawer shows nothing')
 assertDeepEqual(tray.shownSpan(0, 50, 50.5, 0), { start: 50, length: 0 }, 'an empty section shows on the drawer\'s edge once within a pixel of it')
 assertEqual(tray.shownSpan(0, 50, 52, 0), null, 'an empty section further out shows nothing')
+
+// `"drawer": false` shows every tray icon all the time, with no chevron.
+assert(tray.drawerEnabled({}), 'the drawer is on by default')
+assert(tray.drawerEnabled(undefined), 'the drawer is on without settings')
+assert(tray.drawerEnabled({ drawer: true }), 'the drawer stays on when enabled')
+assert(!tray.drawerEnabled({ drawer: false }), 'drawer: false turns the drawer off')
+assert(!tray.drawerOpen({}, false, false), 'the drawer starts closed')
+assert(tray.drawerOpen({}, true, false), 'hovering opens the drawer')
+assert(tray.drawerOpen({}, false, true), 'an open tray menu holds the drawer open')
+assert(tray.drawerOpen({ drawer: false }, false, false), 'drawer: false keeps every icon shown without hovering')
 JS

@@ -64,12 +64,24 @@ function shownSpan(clipStart, clipLength, start, length) {
   return { start: from, length: to - from }
 }
 
+// `"drawer": false` keeps every tray icon in the bar: the drawer stays open
+// and the chevron that reveals it goes away.
+function drawerEnabled(settings) {
+  return !settings || settings.drawer !== false
+}
+
+function drawerOpen(settings, expanded, holdOpen) {
+  return !drawerEnabled(settings) || !!expanded || !!holdOpen
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     shownSpan: shownSpan,
     itemNamed: itemNamed,
     entryId: entryId,
     layoutHasWidget: layoutHasWidget,
-    ownedByOmarchy: ownedByOmarchy
+    ownedByOmarchy: ownedByOmarchy,
+    drawerEnabled: drawerEnabled,
+    drawerOpen: drawerOpen
   }
 }
