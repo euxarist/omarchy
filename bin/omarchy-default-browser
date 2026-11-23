@@ -12,6 +12,11 @@ fi
 
 if (($# == 0)); then
   current_browser=$(omarchy-cmd-default-browser)
+  # A snap names its entry <snap>_<app>.desktop, e.g. firefox_firefox.desktop.
+  snap_app=${current_browser%.desktop}
+  if [[ $snap_app == *_* && ${snap_app%%_*} == "${snap_app#*_}" ]]; then
+    current_browser="${snap_app%%_*}.desktop"
+  fi
   case "$current_browser" in
   chromium.desktop) echo "chromium" ;;
   google-chrome.desktop) echo "chrome" ;;
@@ -38,6 +43,19 @@ zen) browser="zen"; command="zen-browser"; desktop_id="zen.desktop"; name="Zen";
   exit 1
   ;;
 esac
+
+# xdg-settings refuses an ID with no installed entry, and a snap names its
+# entry <snap>_<app>.desktop (Ubuntu's Firefox is firefox_firefox.desktop).
+IFS=: read -ra data_dirs <<<"${XDG_DATA_HOME:-$HOME/.local/share}:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+snap_desktop_id="$browser"_"$desktop_id"
+for data_dir in "${data_dirs[@]}"; do
+  if [[ -f $data_dir/applications/$desktop_id ]]; then
+    break
+  elif [[ -f $data_dir/applications/$snap_desktop_id ]]; then
+    desktop_id=$snap_desktop_id
+    break
+  fi
+done
 
 if omarchy-cmd-missing "$command"; then
   if [[ $installing == "false" ]]; then

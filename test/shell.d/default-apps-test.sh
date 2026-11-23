@@ -274,6 +274,16 @@ grep -Fxq "sudo:install -m 644 -o root -g root -T $ROOT/default/firefox/policies
 [[ -e $installed_dir/firefox ]] || fail "Firefox browser installer marks firefox installed"
 pass "Firefox browser installer restores the complete Omarchy setup"
 
+# Ubuntu's Firefox snap installs firefox_firefox.desktop, never firefox.desktop.
+snap_data="$test_tmp/snap-share"
+mkdir -p "$snap_data/applications"
+printf '[Desktop Entry]\nExec=true %%u\n' >"$snap_data/applications/firefox_firefox.desktop"
+rm -f "$test_home/.local/share/applications/firefox.desktop"
+XDG_DATA_DIRS="$snap_data" omarchy-default-browser firefox
+[[ $(<"$browser_file") == "firefox_firefox.desktop" ]] || fail "the Firefox snap's entry becomes the default browser"
+[[ $(XDG_DATA_DIRS="$snap_data" omarchy-default-browser) == "firefox" ]] || fail "the Firefox snap reads back as firefox"
+pass "picking Firefox sets the snap's desktop entry when only the snap is installed"
+
 : >"$install_log"
 : >"$setup_log"
 rm -f "$installed_dir/zen-browser"
