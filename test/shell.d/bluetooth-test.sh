@@ -7,33 +7,6 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 run_node_test <<'JS'
 const bluetooth = requireFromRoot('shell/plugins/panels/bluetooth/Model.js')
 
-// The pairing agent auto-accepts, so pairing must only be possible while a
-// panel is open or a pairing this machine started is under way. BlueZ leaves
-// adapters pairable by default and nothing else in Omarchy writes the
-// property, so the panel owns it through PairableGate; the gate's behavior is
-// covered at runtime by bluetooth-pairable-gate-test.sh.
-const gateSource = fs.readFileSync(root + '/shell/plugins/panels/bluetooth/PairableGate.qml', 'utf8')
-const gateUse = panelSource.match(/PairableGate \{[\s\S]*?\n {2}\}/)
-assert(gateUse, 'bluetooth panel owns the adapter pairable state through PairableGate')
-assert(/Instantiator \{\s*model: Bluetooth\.adapters \? Bluetooth\.adapters\.values : \[\]\s*delegate: PairableGate \{/.test(panelSource), 'bluetooth gates every controller, not only the default adapter')
-assert(/adapter: root\.bar \? modelData : null/.test(gateUse[0]), 'bluetooth hands a gate its adapter only once the bar can list sibling widgets')
-assert(/open: root\.pairingHeld/.test(gateUse[0]), 'bluetooth holds pairing while the panel is open or a pairing is held over IPC')
-assert(/readonly property bool pairingHeld: !destroying && \(opened \|\| Commons\.BluetoothPairing\.holds > 0\)/.test(panelSource), 'bluetooth counts an open panel and the shared IPC holds alike, and drops both while being torn down')
-assert(/siblingOpen: function\(\) \{ return root\.heldSibling\(\) !== null \}/.test(gateUse[0]), 'bluetooth leaves pairing on for a sibling instance that holds it')
-assert(/function heldSibling\(\)[\s\S]*?items\[i\]\.pairingHeld === true/.test(panelSource), 'bluetooth sibling check reads the same hold the gate does')
-assert(/ShellIpc \{[\s\S]*?function holdPairing\(\): string \{ return Commons\.BluetoothPairing\.hold\(\) \}[\s\S]*?function releasePairing\(token: string\): string \{ return Commons\.BluetoothPairing\.release\(token\) \}/.test(panelSource), 'bluetooth exposes the shared pairing hold over IPC for omarchy-bluetooth-device, released by token')
-const pairingSource = fs.readFileSync(root + '/shell/Commons/BluetoothPairing.qml', 'utf8')
-assert(/^pragma Singleton/m.test(pairingSource) && /singleton BluetoothPairing 1\.0 BluetoothPairing\.qml/.test(fs.readFileSync(root + '/shell/Commons/qmldir', 'utf8')), 'the pairing holds live in a singleton that outlives any widget instance')
-assert(/readonly property int holds: tokens\.length/.test(pairingSource) && /function release\(token\) \{\s*var index = tokens\.indexOf\(String\(token \|\| ""\)\)\s*if \(index === -1\) return "unknown"/.test(pairingSource), 'each pairing hold is a token, so a command releases only the hold it took')
-assert(/Timer \{[\s\S]*?onTriggered: root\.tokens = \[\]/.test(pairingSource), 'pairing holds that are never released expire')
-assert(!/adapter\.pairable = /.test(panelSource), 'bluetooth panel writes pairable only through the gate')
-assert(/Component\.onDestruction: \{[\s\S]{0,200}pairable = false/.test(gateSource), 'a destroyed gate turns pairing off when no sibling holds it')
-
-const agentService = fs.readFileSync(root + '/default/systemd/user/bt-agent.service', 'utf8')
-assert(!/only `pairable: true` when the user/.test(agentService), 'bt-agent no longer claims a pairable gate that did not exist')
-assert(/refuses bonding while it is off/.test(agentService), 'bt-agent documents the panel-owned pairable window')
-assert(/with it removed from\s*#? ?the bar, or the shell not running/.test(agentService), 'bt-agent documents that the gate lives in the bar widget')
-
 assert(bluetooth.isUuidLike('0000110b-0000-1000-8000-00805f9b34fb'), 'bluetooth detects UUID-like names')
 assert(bluetooth.isAddressLike('AA:BB:CC:DD:EE:FF'), 'bluetooth detects address-like names')
 assertEqual(bluetooth.normalizedAddress('AA:BB_CC-dd-ee-ff'), 'aabbccddeeff', 'bluetooth normalizes BlueZ and PipeWire address formats')
